@@ -18,8 +18,8 @@ from torchvision.transforms import functional as F
 from torchvision.transforms import Compose
 from .BadNets import *
 from .BadNets import CreatePoisonedDataset as CreatePoisonedTestDataset
-from settings import base_args, base_config
-args, config = base_args, base_config
+from utils import base_args
+args = base_args
 from attack.originalimagenet import Origdataset
 
 class PoisonedDatasetFolder(DatasetFolder):

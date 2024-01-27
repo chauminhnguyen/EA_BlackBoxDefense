@@ -73,9 +73,9 @@ parser.add_argument('--useAVGUP', type=bool, default=False)
 
 base_args = parser.parse_args()
 
-with open(os.path.join("configs", base_args.dataset_config), "r") as f:
-    config = yaml.safe_load(f)
-base_config = dict2namespace(config)
+# with open(os.path.join("configs", base_args.dataset_config), "r") as f:
+#     config = yaml.safe_load(f)
+# base_config = dict2namespace(config)
 
 print(f"Using the {base_args.dataset}")
 print(f"The at_threshold: {base_args.at_threshold}")
@@ -305,7 +305,7 @@ import torch.nn as nn
 import torchvision
 from torchvision.transforms import Compose, ToTensor, RandomHorizontalFlip,  Resize
 from torchvision.transforms import Compose, ToTensor,  RandomHorizontalFlip, ColorJitter, RandomAffine
-from .originalimagenet import Origdataset
+# from .originalimagenet import Origdataset
 
 
 def process_dataset(args):

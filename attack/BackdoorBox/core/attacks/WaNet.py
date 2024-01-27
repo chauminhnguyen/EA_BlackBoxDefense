@@ -17,8 +17,8 @@ import torch.nn as nn
 from torchvision.transforms import Compose
 
 from .base import *
-from settings import base_args, base_config
-args, config = base_args, base_config
+from utils import base_args
+args = base_args
 
 
 class AddTrigger:

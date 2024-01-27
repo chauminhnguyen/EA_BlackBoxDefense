@@ -5,7 +5,7 @@ from LossFunctions import UnTargeted, Targeted, DefenseLoss
 import numpy as np
 import argparse
 import os
-from utils import get_images_and_labels
+from utils import process_dataset, base_args
 
 
 if __name__ == "__main__":
@@ -31,7 +31,11 @@ if __name__ == "__main__":
 
     i = 0
 
-    x_test, y_test, y_target = get_images_and_labels() # replace this with your own method of getting the images and
+    # args, config = parse_args_and_config(base_args, base_config)
+    clean_train, clean_test, poisoned_train, poisoned_test, backdoor_instance = process_dataset(base_args)
+
+    x_test, y_test = poisoned_train, poisoned_test
+    # x_test, y_test, y_target = process_dataset() # replace this with your own method of getting the images and
     # labels.
     model = Cifar10Model(args.model) # replace this with you own model, assumed to return probabilities on __call__(image)
 

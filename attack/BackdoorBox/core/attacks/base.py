@@ -10,22 +10,22 @@ import torch.nn as nn
 from torch.utils.data import DataLoader
 from torchvision.datasets import DatasetFolder, MNIST, CIFAR10, CelebA
 from attack.originalimagenet import Origdataset
-from preprocess.guided_diffusion.purify import  Purify, SplitDataset, nonSplitDataset, SplitCLeanDataset
+# from preprocess.guided_diffusion.purify import  Purify, SplitDataset, nonSplitDataset, SplitCLeanDataset
 import torchvision.utils as tvu
 
 from ..utils import Log
-from settings import base_args, base_config
-args, config = base_args, base_config
+from utils import base_args
+args = base_args
 
 
-support_list = (
-    DatasetFolder,
-    CIFAR10,
-    Origdataset,
-    SplitDataset,
-    SplitCLeanDataset,
-    nonSplitDataset
-)
+# support_list = (
+#     DatasetFolder,
+#     CIFAR10,
+#     Origdataset,
+#     SplitDataset,
+#     SplitCLeanDataset,
+#     nonSplitDataset
+# )
 
 
 def check(dataset):

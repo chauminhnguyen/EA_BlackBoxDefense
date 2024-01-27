@@ -11,8 +11,8 @@ from torchvision.datasets import CIFAR10, MNIST, DatasetFolder
 
 from .accuracy import accuracy
 from .log import Log
-from settings import base_args, base_config
-args, config = base_args, base_config
+from utils import base_args
+args = base_args
 
 if args.useAVGUP:
      print("===============================Using the Avg_up defense method==========================")
