@@ -34,7 +34,7 @@ if __name__ == "__main__":
     # args, config = parse_args_and_config(base_args, base_config)
     clean_train, clean_test, poisoned_train, poisoned_test, backdoor_instance = process_dataset(base_args)
 
-    x_test, y_test = poisoned_train, poisoned_test
+    # x_test, y_test = poisoned_train, poisoned_test
     # x_test, y_test, y_target = process_dataset() # replace this with your own method of getting the images and
     # labels.
     model = Cifar10Model(args.model) # replace this with you own model, assumed to return probabilities on __call__(image)
@@ -42,9 +42,8 @@ if __name__ == "__main__":
     #loss = Targeted(model, y_test[i], y_target[i], to_pytorch=True)
     # loss = Defense(model, y_test[i], to_pytorch=True) # to_pytorch is True only is the model is a pytorch model
     loss = DefenseLoss(model, to_pytorch=True) # to_pytorch is True only is the model is a pytorch model
-    
-    x_test = x_test[0]
-    y_test = y_test[0]
+    x_test = poisoned_train[0][0].numpy()
+    y_test = poisoned_train[0][1].numpy()
     
     params = {
         "x": x_test, # Image is assume to be numpy array of shape height * width * 3
