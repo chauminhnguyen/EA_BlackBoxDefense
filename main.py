@@ -24,7 +24,7 @@ if __name__ == "__main__":
     pm = 0.4
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--model", help="0 or 1", type=int)
+    parser.add_argument("--model", help="0 or 1", type=int, default=0)
     parser.add_argument("--start", type=int)
     parser.add_argument("--save_directory", type=int)
     args = parser.parse_args()

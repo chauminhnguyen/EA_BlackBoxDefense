@@ -22,7 +22,7 @@ def dict2namespace(config):
 parser = argparse.ArgumentParser()
 
 
-parser.add_argument('--dataset', type=str, default="Imagenette")
+parser.add_argument('--dataset', type=str, default="Cifar10")
 parser.add_argument('--attack_method', type=str, default="BadNet")
 parser.add_argument( "--dataset_config", type=str,  default= "imagenet_256.yml", help="Path to the config file")
 parser.add_argument( "--attack_schedule", type=str,  default= "BadNet", help="Path to the config file")
@@ -305,7 +305,7 @@ import torch.nn as nn
 import torchvision
 from torchvision.transforms import Compose, ToTensor, RandomHorizontalFlip,  Resize
 from torchvision.transforms import Compose, ToTensor,  RandomHorizontalFlip, ColorJitter, RandomAffine
-# from .originalimagenet import Origdataset
+from attack.originalimagenet import Origdataset
 
 
 def process_dataset(args):
