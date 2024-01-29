@@ -49,8 +49,8 @@ if __name__ == "__main__":
     params = {
         "x": x_test, # Image is assume to be numpy array of shape height * width * 3
         "y": y_test,
-        "eps": 24, # number of changed pixels
-        "iterations": 1000 // 2, # model query budget / population size
+        "eps": 100, # number of changed pixels
+        "iterations": 1000, # model query budget / population size
         "pc": pc, # crossover parameter
         "pm": pm, # mutation parameter
         "pop_size": 2, # population size
