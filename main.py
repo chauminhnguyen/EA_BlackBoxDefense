@@ -43,7 +43,8 @@ if __name__ == "__main__":
     # loss = Defense(model, y_test[i], to_pytorch=True) # to_pytorch is True only is the model is a pytorch model
     loss = DefenseLoss(model, to_pytorch=True) # to_pytorch is True only is the model is a pytorch model
     x_test = poisoned_train[0][0].numpy()
-    y_test = poisoned_train[0][1].numpy()
+    x_test = np.transpose(x_test, (1, 2, 0))
+    y_test = np.array(poisoned_train[0][1])
     
     params = {
         "x": x_test, # Image is assume to be numpy array of shape height * width * 3
@@ -58,7 +59,7 @@ if __name__ == "__main__":
         "max_dist": 1e-5, # l2 distance from the original image you are willing to end the attack
         "p_size": 2.0, # Perturbation values have {-p_size, p_size, 0}. Change this if you want smaller perturbations.
         "tournament_size": 2, #Number of parents compared to generate new solutions, cannot be larger than the population
-        "save_directory": args.save_directory
+        "save_directory": './'
     }
     attack = Defense(params)
     attack.defese(loss)

@@ -1,6 +1,6 @@
 absl-py==1.2.0
 astunparse==1.6.3
-autoattack @ git+https://github.com/fra31/auto-attack.git@6482e4d6fbeeb51ae9585c41b16d50d14576aadc
+autoattack @ git+https://github.com/fra31/auto-attack
 cachetools==5.2.0
 certifi
 chardet==4.0.0

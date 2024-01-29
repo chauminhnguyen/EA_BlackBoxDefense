@@ -75,6 +75,8 @@ class Defense:
              "fitness_process": self.fitness,
              "success": success
              }
+        
+        print(d)
 
         # print(d["true_label"], d["adversarial_labels"])
         np.save(self.params["save_directory"], d, allow_pickle=True)
