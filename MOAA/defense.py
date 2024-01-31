@@ -76,7 +76,12 @@ class Defense:
              "success": success
              }
         
-        print(d)
+        print("front0_imgs", len(d["front0_imgs"]), d["front0_imgs"][0].shape)
+        print("queries", d["queries"])
+        print("adversarial_labels", d["adversarial_labels"])
+        print("front0_fitness", d["front0_fitness"])
+        print("fitness_process", d["fitness_process"])
+        print("success", d["success"])
 
         # print(d["true_label"], d["adversarial_labels"])
         np.save(self.params["save_directory"], d, allow_pickle=True)
