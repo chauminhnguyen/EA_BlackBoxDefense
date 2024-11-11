@@ -36,8 +36,6 @@ def evaluate(W):
     new_net.set_weights(W)
     running_loss = 0.
     for X, label in data.trainloader:
-        X = X.unsqueeze(0)
-        label = torch.tensor(label).unsqueeze(0)
         outputs = net(X)
         loss = criterion(outputs, label)
         running_loss += loss.item()
