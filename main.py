@@ -1,65 +1,61 @@
-# from ProposedMethod.QueryEfficient.Scratch import Attack
-from MOAA.defense import Defense
-from Cifar10Models import Cifar10Model # Can be changes to ImageNetModels
-from LossFunctions import UnTargeted, Targeted, DefenseLoss
+from ges import GES
 import numpy as np
-import argparse
-import os
-from utils import process_dataset, base_args
+import optuna
+from cnn import Data, Net
+import torch.nn as nn
+
+data = Data()
+net = Net()
+criterion = nn.CrossEntropyLoss() 
+
+def func(W):
+
+    new_net = Net()
+    new_net.set_weights(W)
+    # new_net.load_state_dict(net.state_dict())
+    index = np.random.randint(0, len(data.trainloader))
+    X, label = list(data.trainloader)[index]
+    outputs = new_net(X)
+    loss = criterion(outputs, label)
+    running_loss = loss.item()
+
+    # running_loss = 0.
+    # # return X**2 + X - 6
+    # for i, ele in enumerate(data.trainloader):
+    #     # get the inputs; data is a list of [inputs, labels]
+    #     inputs, labels = ele
+    #     outputs = net(inputs)
+    #     loss = criterion(outputs, labels)
+    #     running_loss += loss.item()
+    return running_loss
 
 
-if __name__ == "__main__":
-    """
-    Non-Targeted
-    pc = 0.1
-    pm = 0.4
+# X = np.random.rand(1, 100) # batch, dim
+# Y = ges(X, T=600, P=100, n=100, k=50, f=func, std=0.1, alpha=0.5, beta=2, eta=1e-7)
+# Y = ges(X, T=749, P=100, n=100, k=32, f=func, std=1.0, alpha=0.9, beta=1.5, eta=0.005154351000000001)
+if __name__ == '__main__':
+    # Y = func()
+    X = data.trainloader
+    ges = GES(T=5, P=100, n=62006, k=500, f=func, update_X=net.set_weights, std=0.1, alpha=0.5, beta=2, eta=1e-7)
+    Y = ges.run(net.get_weights())
+    print(Y)
+# print(np.square(np.subtract(Y,Y_)).mean())
+
+# def objective(trial):
+#     X = np.random.rand(1, 100) # batch, dim
+
+#     T = trial.suggest_int('T', 2, 1000)
+#     k = trial.suggest_int('k', 10, 100)
+#     std = trial.suggest_float('std', 0.1, 1., step=0.1)
+#     alpha = trial.suggest_float('alpha', 0.1, 1., step=0.1)
+#     beta = trial.suggest_float('beta', 0.1, 10., step=0.1)
+#     eta = trial.suggest_float('eta', 1e-9, 1e-2, step=1e-8)
     
-    Targeted:
-    pc = 0.1
-    pm = 0.2
-    """
-    np.random.seed(0)
+#     Y = ges(X, T=T, P=100, n=100, k=k, f=func, std=std, alpha=alpha, beta=beta, eta=eta)
+#     Y_ = func(X)
+#     return np.square(np.subtract(Y,Y_)).mean()
 
-    pc = 0.1
-    pm = 0.4
+# study = optuna.create_study()
+# study.optimize(objective, n_trials=500)
 
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--model", help="0 or 1", type=int, default=0)
-    parser.add_argument("--start", type=int)
-    parser.add_argument("--save_directory", type=int)
-    args = parser.parse_args()
-
-    i = 0
-
-    # args, config = parse_args_and_config(base_args, base_config)
-    clean_train, clean_test, poisoned_train, poisoned_test, backdoor_instance = process_dataset(base_args)
-
-    # x_test, y_test = poisoned_train, poisoned_test
-    # x_test, y_test, y_target = process_dataset() # replace this with your own method of getting the images and
-    # labels.
-    model = Cifar10Model(args.model) # replace this with you own model, assumed to return probabilities on __call__(image)
-
-    #loss = Targeted(model, y_test[i], y_target[i], to_pytorch=True)
-    # loss = Defense(model, y_test[i], to_pytorch=True) # to_pytorch is True only is the model is a pytorch model
-    loss = DefenseLoss(model, to_pytorch=True) # to_pytorch is True only is the model is a pytorch model
-    x_test = poisoned_train[0][0].numpy()
-    x_test = np.transpose(x_test, (1, 2, 0))
-    y_test = np.array(poisoned_train[0][1])
-    
-    params = {
-        "x": x_test, # Image is assume to be numpy array of shape height * width * 3
-        "y": y_test,
-        "eps": 100, # number of changed pixels
-        "iterations": 1000, # model query budget / population size
-        "pc": pc, # crossover parameter
-        "pm": pm, # mutation parameter
-        "pop_size": 2, # population size
-        "zero_probability": 0.3,
-        "include_dist": True, # Set false to not consider minimizing perturbation size
-        "max_dist": 1e-5, # l2 distance from the original image you are willing to end the attack
-        "p_size": 2.0, # Perturbation values have {-p_size, p_size, 0}. Change this if you want smaller perturbations.
-        "tournament_size": 2, #Number of parents compared to generate new solutions, cannot be larger than the population
-        "save_directory": './'
-    }
-    attack = Defense(params)
-    attack.defese(loss)
+# print(study.best_params)  # E.g. {'x': 2.002108042}
