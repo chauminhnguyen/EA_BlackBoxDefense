@@ -31,6 +31,17 @@ def func(W):
     #     running_loss += loss.item()
     return running_loss
 
+def evaluate(W):
+    new_net = Net()
+    new_net.set_weights(W)
+    running_loss = 0.
+    for X, label in data.trainloader:
+        X = X.unsqueeze(0)
+        label = torch.tensor(label).unsqueeze(0)
+        outputs = net(X)
+        loss = criterion(outputs, label)
+        running_loss += loss.item()
+    return running_loss
 
 # X = np.random.rand(1, 100) # batch, dim
 # Y = ges(X, T=600, P=100, n=100, k=50, f=func, std=0.1, alpha=0.5, beta=2, eta=1e-7)
@@ -40,7 +51,7 @@ if __name__ == '__main__':
     X = data.trainloader
     ges = GES(T=5, P=100, n=62006, k=500, f=func, update_X=net.set_weights, std=0.1, alpha=0.5, beta=2, eta=1e-7)
     Y = ges.run(net.get_weights())
-    print(Y)
+    print(evaluate(Y))
 # print(np.square(np.subtract(Y,Y_)).mean())
 
 # def objective(trial):
