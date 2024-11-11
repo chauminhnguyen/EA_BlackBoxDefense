@@ -1,64 +1,63 @@
+from ges import GES
+import numpy as np
 import torch
-import torchvision
-import torchvision.transforms as transforms
+from cnn import Data, Net
 import torch.nn as nn
-import torch.nn.functional as F
 
-class Data:
-    def __init__(self):
-        transform = transforms.Compose(
-            [transforms.ToTensor(),
-            transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
+data = Data()
+net = Net()
+criterion = nn.CrossEntropyLoss() 
 
-        batch_size = 1
+def func(W):
 
-        self.trainset = torchvision.datasets.CIFAR10(root='./data', train=True,
-                                                download=True, transform=transform)
-        # self.trainloader = torch.utils.data.DataLoader(trainset, batch_size=batch_size,
-        #                                         shuffle=True, num_workers=2)
+    new_net = Net()
+    new_net.set_weights(W)
+    # new_net.load_state_dict(net.state_dict())
+    index = np.random.randint(0, len(data.trainset))
+    X, label = data.trainset[index]
+    X = X.unsqueeze(0)
+    label = torch.tensor(label).unsqueeze(0)
+    outputs = new_net(X)
+    loss = criterion(outputs, label)
+    running_loss = loss.item()
 
-        self.testset = torchvision.datasets.CIFAR10(root='./data', train=False,
-                                            download=True, transform=transform)
-        # self.testloader = torch.utils.data.DataLoader(testset, batch_size=batch_size,
-                                                # shuffle=False, num_workers=2)
+    # running_loss = 0.
+    # # return X**2 + X - 6
+    # for i, ele in enumerate(data.trainloader):
+    #     # get the inputs; data is a list of [inputs, labels]
+    #     inputs, labels = ele
+    #     outputs = net(inputs)
+    #     loss = criterion(outputs, labels)
+    #     running_loss += loss.item()
+    return running_loss
 
-        self.classes = ('plane', 'car', 'bird', 'cat',
-                'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
 
+# X = np.random.rand(1, 100) # batch, dim
+# Y = ges(X, T=600, P=100, n=100, k=50, f=func, std=0.1, alpha=0.5, beta=2, eta=1e-7)
+# Y = ges(X, T=749, P=100, n=100, k=32, f=func, std=1.0, alpha=0.9, beta=1.5, eta=0.005154351000000001)
+if __name__ == '__main__':
+    # Y = func()
+    X = data.trainloader
+    ges = GES(T=5, P=100, n=62006, k=500, f=func, update_X=net.set_weights, std=0.1, alpha=0.5, beta=2, eta=1e-7)
+    Y = ges.run(net.get_weights())
+    print(Y)
+# print(np.square(np.subtract(Y,Y_)).mean())
 
-class Net(nn.Module):
-    def __init__(self):
-        super().__init__()
-        self.conv1 = nn.Conv2d(3, 6, 5)
-        self.pool = nn.MaxPool2d(2, 2)
-        self.conv2 = nn.Conv2d(6, 16, 5)
-        self.fc1 = nn.Linear(16 * 5 * 5, 120)
-        self.fc2 = nn.Linear(120, 84)
-        self.fc3 = nn.Linear(84, 10)
+# def objective(trial):
+#     X = np.random.rand(1, 100) # batch, dim
 
-    def forward(self, x):
-        x = self.pool(F.relu(self.conv1(x)))
-        x = self.pool(F.relu(self.conv2(x)))
-        x = torch.flatten(x, 1) # flatten all dimensions except batch
-        x = F.relu(self.fc1(x))
-        x = F.relu(self.fc2(x))
-        x = self.fc3(x)
-        return x
+#     T = trial.suggest_int('T', 2, 1000)
+#     k = trial.suggest_int('k', 10, 100)
+#     std = trial.suggest_float('std', 0.1, 1., step=0.1)
+#     alpha = trial.suggest_float('alpha', 0.1, 1., step=0.1)
+#     beta = trial.suggest_float('beta', 0.1, 10., step=0.1)
+#     eta = trial.suggest_float('eta', 1e-9, 1e-2, step=1e-8)
     
-    def get_weights(self):
-        self.weights_dict = {name: param.view(-1) for name, param in self.named_parameters()}
-        return torch.cat([param for param in self.weights_dict.values()])
-    
-    def set_weights(self, W):
-        # Split the modified model_vector and update the weights in the model
-        start = 0
-        for name, param in self.named_parameters():
-            # Calculate the number of elements in the parameter
-            num_params = param.numel()
-            # Get the corresponding values from the modified vector
-            updated_values = W[start:start + num_params].view(param.size())
-            # Update the parameter in the model
-            with torch.no_grad():
-                param.copy_(updated_values)
-            # Move the start index
-            start += num_params
+#     Y = ges(X, T=T, P=100, n=100, k=k, f=func, std=std, alpha=alpha, beta=beta, eta=eta)
+#     Y_ = func(X)
+#     return np.square(np.subtract(Y,Y_)).mean()
+
+# study = optuna.create_study()
+# study.optimize(objective, n_trials=500)
+
+# print(study.best_params)  # E.g. {'x': 2.002108042}
