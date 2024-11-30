@@ -52,7 +52,7 @@ class GES:
         self.noise_arr = []
 
     def run(self, X, targets):
-        def approximate_derivative(X, f_minus_arr, h=1e-8):
+        def approximate_derivative(X, h=1e-8):
             sum_arr = []
             
             for i in range(self.P):
@@ -75,7 +75,7 @@ class GES:
         if self.U is None:
             self.U = torch.rand(self.n, self.k)
         else:
-            surrogate_grad = approximate_derivative(self.f_plus_arr, self.f_minus_arr)
+            surrogate_grad = approximate_derivative(X)
             # U = orth(surrogate_grad.T)
             try:
                 self.U, _ = torch.linalg.qr(surrogate_grad.T)
