@@ -17,7 +17,7 @@ class Surrogate:
         loss = self.ce_criterion(cls, targets)
         return loss
     
-    def surrogate_recon(self, x, e, targets):
+    def surrogate_recon(self, x, targets):
         x = self.denoiser(x)
         cls = self.model(x)
         loss = self.mse_criterion(cls, targets)
@@ -53,10 +53,13 @@ class GES:
         self.P = self.k
 
         # for ele in X:
-        f_plus_arr = torch.zeros((self.P, self.n))
-        f_minus_arr = torch.zeros((self.P, self.n))
-        noise_arr = torch.zeros((self.P, self.n))
-        
+        # f_plus_arr = torch.zeros((self.P, self.n))
+        # f_minus_arr = torch.zeros((self.P, self.n))
+        # noise_arr = torch.zeros((self.P, self.n))
+        f_plus_arr = []
+        f_minus_arr = []
+        noise_arr = []
+
         # for t in tqdm(range(self.T)):
         # Get surrogate gradient
         if self.U is None:
@@ -77,9 +80,14 @@ class GES:
             a = self.std * math.sqrt(self.alpha/self.n) * noise_n
             b = self.std * math.sqrt((1 - self.alpha)/self.k) * self.U @ noise_k
             noise =  a + b
-            noise_arr[i] = noise
-            f_plus_arr[i] = self.f(X + noise, targets)
-            f_minus_arr[i] = self.f(X - noise, targets)
+            noise_arr.append(noise)
+            f_plus_arr.append(self.f(X + noise, targets))
+            f_minus_arr.append(self.f(X - noise, targets))
+        
+        f_plus_arr = torch.vstack(f_plus_arr)
+        f_minus_arr = torch.vstack(f_minus_arr)
+        noise_arr = torch.vstack(noise_arr)
+
         g = self.beta / (2*(self.std**2)*self.P) * torch.sum(noise_arr * (f_plus_arr - f_minus_arr), dim=0)
         
         # X -= eta * g

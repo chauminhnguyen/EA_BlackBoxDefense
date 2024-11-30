@@ -352,10 +352,14 @@ def train(loader: DataLoader, denoiser: torch.nn.Module, criterion, optimizer: O
         k = args.q
         P = k
         # n = 3*64*64
-        batch_size = recon.size()[0]
-        channel = recon.size()[1]
-        h = recon.size()[2]
-        w = recon.size()[3]
+        
+        dataset = loader.dataset
+        inputs = dataset[0][0]
+        # print('===', inputs.shape)
+        # batch_size = inputs.size()[0]
+        channel = inputs.size()[0]
+        h = inputs.size()[1]
+        w = inputs.size()[2]
         n = channel * h * w
         sur = Surrogate(denoiser, classifier)
         ges = GES(P, n, k, sur.surrogate_cls, std=0.1, alpha=0.5, beta=2, eta=1e-7)
@@ -436,6 +440,7 @@ def train(loader: DataLoader, denoiser: torch.nn.Module, criterion, optimizer: O
                 loss = torch.sum(recon_flat * grad_est_no_grad, dim=-1).mean()
             
             elif args.zo_method == 'GES':
+                inputs = torch.flatten(inputs, start_dim=1)
                 loss = ges.run(inputs, targets)
 
         # compute gradient and do SGD step
