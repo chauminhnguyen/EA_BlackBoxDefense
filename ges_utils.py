@@ -12,12 +12,14 @@ class Surrogate:
         self.mse_criterion = MSELoss(size_average=None, reduce=None, reduction='none').cuda()
 
     def surrogate_cls(self, x, targets):
+        x = x.view(-1, 3, 32,32)
         x = self.denoiser(x)
         cls = self.model(x)
         loss = self.ce_criterion(cls, targets)
         return loss
     
     def surrogate_recon(self, x, targets):
+        x = x.view(-1, 3, 32,32)
         x = self.denoiser(x)
         cls = self.model(x)
         loss = self.mse_criterion(cls, targets)
@@ -45,10 +47,21 @@ class GES:
         self.beta = beta
         self.eta = eta
         self.U = None
+        self.f_plus_arr = []
+        self.f_minus_arr = []
+        self.noise_arr = []
 
     def run(self, X, targets):
-        def approximate_derivative(f_plus_arr, f_minus_arr, h=1e-8):
-            return (f_plus_arr - f_minus_arr / (2 * h))
+        def approximate_derivative(X, f_minus_arr, h=1e-8):
+            sum_arr = []
+            
+            for i in range(self.P):
+                noise = torch.rand(self.n, self.k)
+                f_plus = self.f(X + noise.to('cuda'), targets)
+                f_minus = self.f(X - noise.to('cuda'), targets)
+                sum_arr.append(noise * (f_plus - f_minus))
+            sum_arr = torch.vstack(sum_arr)
+            return torch.sum(sum_arr, dim=1)
 
         self.P = self.k
 
@@ -56,16 +69,13 @@ class GES:
         # f_plus_arr = torch.zeros((self.P, self.n))
         # f_minus_arr = torch.zeros((self.P, self.n))
         # noise_arr = torch.zeros((self.P, self.n))
-        f_plus_arr = []
-        f_minus_arr = []
-        noise_arr = []
-
+        
         # for t in tqdm(range(self.T)):
         # Get surrogate gradient
         if self.U is None:
             self.U = torch.rand(self.n, self.k)
         else:
-            surrogate_grad = approximate_derivative(f_plus_arr, f_minus_arr)
+            surrogate_grad = approximate_derivative(self.f_plus_arr, self.f_minus_arr)
             # U = orth(surrogate_grad.T)
             try:
                 self.U, _ = torch.linalg.qr(surrogate_grad.T)
@@ -80,17 +90,18 @@ class GES:
             a = self.std * math.sqrt(self.alpha/self.n) * noise_n
             b = self.std * math.sqrt((1 - self.alpha)/self.k) * self.U @ noise_k
             noise =  a + b
-            noise_arr.append(noise)
-            f_plus_arr.append(self.f(X + noise, targets))
-            f_minus_arr.append(self.f(X - noise, targets))
+            self.noise_arr.append(noise)
+            self.f_plus_arr.append(self.f(X + noise.to('cuda'), targets))
+            self.f_minus_arr.append(self.f(X - noise.to('cuda'), targets))
         
-        f_plus_arr = torch.vstack(f_plus_arr)
-        f_minus_arr = torch.vstack(f_minus_arr)
-        noise_arr = torch.vstack(noise_arr)
+        self.f_plus_arr = torch.vstack(self.f_plus_arr).to('cuda')
+        self.f_minus_arr = torch.vstack(self.f_minus_arr).to('cuda')
+        self.noise_arr = torch.vstack(self.noise_arr).to('cuda')
 
-        g = self.beta / (2*(self.std**2)*self.P) * torch.sum(noise_arr * (f_plus_arr - f_minus_arr), dim=0)
+        g = self.beta / (2*(self.std**2)*self.P) * torch.sum(self.noise_arr * (self.f_plus_arr - self.f_minus_arr), dim=0)
         
         # X -= eta * g
         # self.update_X(self.eta * g)
         # return X
-        return self.eta * g
+        # return self.eta * g
+        return torch.sum(self.eta * g, dim=-1).mean()
