@@ -123,7 +123,7 @@ if __name__ == "__main__":
 
         if args.visualize_examples and i < 1000:
             pil = toPilImage(x)
-            pil.save("{}/{}_clean.png".format(adv_examples_dir, i))
+            pil.save("{}/{}_clean.png".format(adv_examples_dir, i))      
 
         x = x.unsqueeze(0).cuda()
         label = torch.Tensor([label]).cuda().long()
