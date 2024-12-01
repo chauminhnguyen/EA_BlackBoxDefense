@@ -11,13 +11,14 @@ class Surrogate:
         self.ce_criterion = CrossEntropyLoss(size_average=None, reduce=False, reduction='none').cuda()
         self.mse_criterion = MSELoss(size_average=None, reduce=None, reduction='none').cuda()
 
-    def surrogate_cls(self, x, targets, batch_size=64):
+    def surrogate_cls(self, x, targets, batch_size=8):
         """
         Processes data in smaller batches to reduce memory consumption for classification.
         """
         x = x.view(-1, 3, 32, 32)
-        total_loss = torch.tensor(0.0)
+        total_loss = torch.tensor(0.0).to('cuda')
         num_samples = x.size(0)
+        targets = targets.repeat(x.size(0))
         
         for start_idx in range(0, num_samples, batch_size):
             end_idx = start_idx + batch_size
@@ -29,8 +30,10 @@ class Surrogate:
             cls = self.model(x_batch)
             
             # Compute loss for the batch
-            batch_loss = self.ce_criterion(cls, targets_batch.repeat(cls.size(0)))
-            total_loss += batch_loss
+            # print(x_batch.shape, cls.shape, targets_batch, targets_batch.repeat(x_batch.size(0)).shape)
+            batch_loss = self.ce_criterion(cls, targets_batch)
+            # print(batch_loss[0])
+            total_loss += batch_loss[0]
         
         return total_loss / num_samples  # Average loss over the entire dataset
 

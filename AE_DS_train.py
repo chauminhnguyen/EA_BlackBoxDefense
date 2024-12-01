@@ -108,6 +108,8 @@ args = parser.parse_args()
 torch.manual_seed(0)
 torch.cuda.manual_seed_all(0)
 
+torch.set_float32_matmul_precision('high')
+
 toPilImage = ToPILImage()
 
 
@@ -154,6 +156,8 @@ def main():
     else:
         denoiser = get_architecture(args.arch, args.dataset)
 
+    # denoiser = torch.compile(denoiser)
+
     # b) AutoEncoder
     if args.model_type == 'AE_DS':
         if args.pretrained_encoder:
@@ -176,6 +180,7 @@ def main():
     checkpoint = torch.load(args.classifier)
     clf = get_architecture(checkpoint['arch'], args.dataset)
     clf.load_state_dict(checkpoint['state_dict'])
+    # clf = torch.compile(clf)
     clf.cuda().eval()
     requires_grad_(clf, False)
 
