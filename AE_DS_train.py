@@ -108,7 +108,7 @@ args = parser.parse_args()
 torch.manual_seed(0)
 torch.cuda.manual_seed_all(0)
 
-torch.set_float32_matmul_precision('high')
+# torch.set_float32_matmul_precision('high')
 
 toPilImage = ToPILImage()
 
@@ -447,7 +447,8 @@ def train(loader: DataLoader, denoiser: torch.nn.Module, criterion, optimizer: O
             elif args.zo_method == 'GES':
                 inputs = torch.flatten(recon, start_dim=1)
                 grad_est_no_grad = ges.run(inputs, targets)
-                loss = torch.sum(recon * grad_est_no_grad, dim=-1).mean()
+                recon_flat = recon.view(-1)
+                loss = torch.sum(recon_flat * grad_est_no_grad, dim=-1).mean()
                 
         # compute gradient and do SGD step
         optimizer.zero_grad()
