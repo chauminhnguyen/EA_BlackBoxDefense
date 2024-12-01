@@ -11,19 +11,52 @@ class Surrogate:
         self.ce_criterion = CrossEntropyLoss(size_average=None, reduce=False, reduction='none').cuda()
         self.mse_criterion = MSELoss(size_average=None, reduce=None, reduction='none').cuda()
 
-    def surrogate_cls(self, x, targets):
-        x = x.view(-1, 3, 32,32)
-        x = self.denoiser(x)
-        cls = self.model(x)
-        loss = self.ce_criterion(cls, targets.repeat(cls.size(0)))
-        return loss
-    
-    def surrogate_recon(self, x, targets):
-        x = x.view(-1, 3, 32,32)
-        x = self.denoiser(x)
-        cls = self.model(x)
-        loss = self.mse_criterion(cls, targets)
-        return loss
+    def surrogate_cls(self, x, targets, batch_size=64):
+        """
+        Processes data in smaller batches to reduce memory consumption for classification.
+        """
+        x = x.view(-1, 3, 32, 32)
+        total_loss = 0.0
+        num_samples = x.size(0)
+        
+        for start_idx in range(0, num_samples, batch_size):
+            end_idx = start_idx + batch_size
+            x_batch = x[start_idx:end_idx]
+            targets_batch = targets[start_idx:end_idx]
+            
+            # Forward pass for the batch
+            x_batch = self.denoiser(x_batch)
+            cls = self.model(x_batch)
+            
+            # Compute loss for the batch
+            batch_loss = self.ce_criterion(cls, targets_batch.repeat(cls.size(0)))
+            total_loss += batch_loss.item()
+        
+        return total_loss / num_samples  # Average loss over the entire dataset
+
+    def surrogate_recon(self, x, targets, batch_size=64):
+        """
+        Processes data in smaller batches to reduce memory consumption for reconstruction.
+        """
+        x = x.view(-1, 3, 32, 32)
+        total_loss = 0.0
+        num_samples = x.size(0)
+        
+        for start_idx in range(0, num_samples, batch_size):
+            end_idx = start_idx + batch_size
+            x_batch = x[start_idx:end_idx]
+            targets_batch = targets[start_idx:end_idx]
+            
+            # Forward pass for the batch
+            x_batch = self.denoiser(x_batch)
+            cls = self.model(x_batch)
+            
+            # Compute loss for the batch
+            batch_loss = self.mse_criterion(cls, targets_batch)
+            total_loss += batch_loss.item()
+        
+        return total_loss / num_samples  # Average loss over the entire dataset
+
 
 # def update_X(model, loss):
 #     loss.backward()
