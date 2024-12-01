@@ -445,9 +445,10 @@ def train(loader: DataLoader, denoiser: torch.nn.Module, criterion, optimizer: O
                 loss = torch.sum(recon_flat * grad_est_no_grad, dim=-1).mean()
             
             elif args.zo_method == 'GES':
-                inputs = torch.flatten(inputs, start_dim=1)
-                loss = ges.run(inputs, targets)
-
+                inputs = torch.flatten(recon, start_dim=1)
+                grad_est_no_grad = ges.run(inputs, targets)
+                loss = torch.sum(recon * grad_est_no_grad, dim=-1).mean()
+                
         # compute gradient and do SGD step
         optimizer.zero_grad()
         loss.backward()

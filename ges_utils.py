@@ -139,5 +139,5 @@ class GES:
             # X -= eta * g
             # self.update_X(self.eta * g)
             # return X
-            # return self.eta * g
-            return torch.sum(self.eta * g, dim=-1).mean()
+            return self.eta * g
+            # return torch.sum(self.eta * g, dim=-1).mean()
