@@ -107,36 +107,37 @@ class GES:
         
         # for t in tqdm(range(self.T)):
         # Get surrogate gradient
-        if self.U is None:
-            self.U = torch.rand(self.n, self.k)
-        else:
-            surrogate_grad = approximate_derivative(X)
-            # U = orth(surrogate_grad.T)
-            try:
-                self.U, _ = torch.linalg.qr(surrogate_grad.T)
-            except:
-                return float('nan')
-        # Update k dim U
-        
-        for i in range(self.P):
-            noise_n = torch.rand(self.n)
-            noise_k = torch.rand(self.k)
+        with torch.no_grad():
+            if self.U is None:
+                self.U = torch.rand(self.n, self.k)
+            else:
+                surrogate_grad = approximate_derivative(X)
+                # U = orth(surrogate_grad.T)
+                try:
+                    self.U, _ = torch.linalg.qr(surrogate_grad.T)
+                except:
+                    return float('nan')
+            # Update k dim U
+            
+            for i in range(self.P):
+                noise_n = torch.rand(self.n)
+                noise_k = torch.rand(self.k)
 
-            a = self.std * math.sqrt(self.alpha/self.n) * noise_n
-            b = self.std * math.sqrt((1 - self.alpha)/self.k) * self.U @ noise_k
-            noise =  a + b
-            self.noise_arr.append(noise)
-            self.f_plus_arr.append(self.f(X + noise.to('cuda'), targets))
-            self.f_minus_arr.append(self.f(X - noise.to('cuda'), targets))
-        
-        self.f_plus_arr = torch.vstack(self.f_plus_arr).to('cuda')
-        self.f_minus_arr = torch.vstack(self.f_minus_arr).to('cuda')
-        self.noise_arr = torch.vstack(self.noise_arr).to('cuda')
+                a = self.std * math.sqrt(self.alpha/self.n) * noise_n
+                b = self.std * math.sqrt((1 - self.alpha)/self.k) * self.U @ noise_k
+                noise =  a + b
+                self.noise_arr.append(noise)
+                self.f_plus_arr.append(self.f(X + noise.to('cuda'), targets))
+                self.f_minus_arr.append(self.f(X - noise.to('cuda'), targets))
+            
+            self.f_plus_arr = torch.vstack(self.f_plus_arr).to('cuda')
+            self.f_minus_arr = torch.vstack(self.f_minus_arr).to('cuda')
+            self.noise_arr = torch.vstack(self.noise_arr).to('cuda')
 
-        g = self.beta / (2*(self.std**2)*self.P) * torch.sum(self.noise_arr * (self.f_plus_arr - self.f_minus_arr), dim=0)
-        
-        # X -= eta * g
-        # self.update_X(self.eta * g)
-        # return X
-        # return self.eta * g
-        return torch.sum(self.eta * g, dim=-1).mean()
+            g = self.beta / (2*(self.std**2)*self.P) * torch.sum(self.noise_arr * (self.f_plus_arr - self.f_minus_arr), dim=0)
+            
+            # X -= eta * g
+            # self.update_X(self.eta * g)
+            # return X
+            # return self.eta * g
+            return torch.sum(self.eta * g, dim=-1).mean()
