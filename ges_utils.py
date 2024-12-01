@@ -32,7 +32,7 @@ class Surrogate:
             batch_loss = self.ce_criterion(cls, targets_batch.repeat(cls.size(0)))
             total_loss += batch_loss.item()
         
-        return total_loss / num_samples  # Average loss over the entire dataset
+        return torch.tensor(total_loss / num_samples)  # Average loss over the entire dataset
 
     def surrogate_recon(self, x, targets, batch_size=64):
         """
@@ -55,7 +55,7 @@ class Surrogate:
             batch_loss = self.mse_criterion(cls, targets_batch)
             total_loss += batch_loss.item()
         
-        return total_loss / num_samples  # Average loss over the entire dataset
+        return torch.tensor(total_loss / num_samples)  # Average loss over the entire dataset
 
 
 # def update_X(model, loss):
