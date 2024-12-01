@@ -15,7 +15,7 @@ class Surrogate:
         x = x.view(-1, 3, 32,32)
         x = self.denoiser(x)
         cls = self.model(x)
-        loss = self.ce_criterion(cls, targets)
+        loss = self.ce_criterion(cls, targets.repeat(cls.size(0)))
         return loss
     
     def surrogate_recon(self, x, targets):
@@ -54,11 +54,10 @@ class GES:
     def run(self, X, targets):
         def approximate_derivative(X, h=1e-8):
             sum_arr = []
-            
             for i in range(self.P):
-                noise = torch.rand(self.n, self.k)
-                f_plus = self.f(X + noise.to('cuda'), targets)
-                f_minus = self.f(X - noise.to('cuda'), targets)
+                noise = torch.rand(self.n, self.k).to('cuda')
+                f_plus = self.f(X.T + noise, targets)
+                f_minus = self.f(X.T - noise, targets)
                 sum_arr.append(noise * (f_plus - f_minus))
             sum_arr = torch.vstack(sum_arr)
             return torch.sum(sum_arr, dim=1)
