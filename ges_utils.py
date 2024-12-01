@@ -16,7 +16,7 @@ class Surrogate:
         Processes data in smaller batches to reduce memory consumption for classification.
         """
         x = x.view(-1, 3, 32, 32)
-        total_loss = 0.0
+        total_loss = torch.tensor(0.0)
         num_samples = x.size(0)
         
         for start_idx in range(0, num_samples, batch_size):
@@ -30,9 +30,9 @@ class Surrogate:
             
             # Compute loss for the batch
             batch_loss = self.ce_criterion(cls, targets_batch.repeat(cls.size(0)))
-            total_loss += batch_loss.item()
+            total_loss += batch_loss
         
-        return torch.tensor(total_loss / num_samples)  # Average loss over the entire dataset
+        return total_loss / num_samples  # Average loss over the entire dataset
 
     def surrogate_recon(self, x, targets, batch_size=64):
         """
@@ -53,7 +53,7 @@ class Surrogate:
             
             # Compute loss for the batch
             batch_loss = self.mse_criterion(cls, targets_batch)
-            total_loss += batch_loss.item()
+            total_loss += batch_loss
         
         return torch.tensor(total_loss / num_samples)  # Average loss over the entire dataset
 
