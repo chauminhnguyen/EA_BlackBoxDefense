@@ -366,7 +366,7 @@ def train(loader: DataLoader, denoiser: torch.nn.Module, criterion, optimizer: O
         h = inputs.size()[1]
         w = inputs.size()[2]
         n = channel * h * w
-        sur = Surrogate(denoiser, classifier)
+        sur = Surrogate(denoiser, classifier, losses)
         ges = GES(P, n, k, sur.surrogate_cls, std=0.1, alpha=0.5, beta=2, eta=1e-2)
 
     for i, (inputs, targets) in enumerate(loader):
