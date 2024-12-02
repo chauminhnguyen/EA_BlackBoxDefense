@@ -5,11 +5,12 @@ import math
 
 
 class Surrogate:
-    def __init__(self, denoiser, model):
+    def __init__(self, denoiser, model, logger=None):
         self.denoiser = denoiser
         self.model = model
         self.ce_criterion = CrossEntropyLoss(size_average=None, reduce=False, reduction='none').cuda()
         self.mse_criterion = MSELoss(size_average=None, reduce=None, reduction='none').cuda()
+        self.logger = logger
 
     def surrogate_cls(self, x, targets, batch_size=8):
         """
@@ -34,6 +35,9 @@ class Surrogate:
             batch_loss = self.ce_criterion(cls, targets_batch)
             # print(batch_loss[0])
             total_loss += batch_loss[0]
+        
+        if self.logger is not None:
+            self.logger.update(total_loss.item(), num_samples)
         
         return total_loss / num_samples  # Average loss over the entire dataset
 
