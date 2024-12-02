@@ -90,12 +90,14 @@ class GES:
     def run(self, X, targets):
         def approximate_derivative(X, h=1e-8):
             sum_arr = []
-            for i in range(self.P):
-                noise = torch.rand(self.n, self.k).to('cuda')
-                f_plus = self.f(X.T + noise, targets)
-                f_minus = self.f(X.T - noise, targets)
-                sum_arr.append(noise * (f_plus - f_minus))
-            sum_arr = torch.vstack(sum_arr)
+            # for i in range(self.P):
+            noise = torch.rand(self.n, self.k).to('cuda')
+            f_plus = self.f(X.T + noise, targets)
+            f_minus = self.f(X.T - noise, targets)
+            sum_arr = noise * (f_plus - f_minus)
+            # sum_arr.append(noise * (f_plus - f_minus))
+            # sum_arr = torch.vstack(sum_arr)
+
             # return torch.sum(sum_arr, dim=1)
             return sum_arr
 
