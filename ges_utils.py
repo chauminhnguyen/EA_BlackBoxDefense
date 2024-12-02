@@ -96,7 +96,8 @@ class GES:
                 f_minus = self.f(X.T - noise, targets)
                 sum_arr.append(noise * (f_plus - f_minus))
             sum_arr = torch.vstack(sum_arr)
-            return torch.sum(sum_arr, dim=1)
+            # return torch.sum(sum_arr, dim=1)
+            return sum_arr
 
         self.P = self.k
 
