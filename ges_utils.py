@@ -83,7 +83,7 @@ class GES:
         self.beta = beta
         self.eta = eta
         self.U = None
-        self.f_plus_arr = []
+        self.f_plus_arr = torch.tensor(self.k, )
         self.f_minus_arr = []
         self.noise_arr = []
 
@@ -116,26 +116,28 @@ class GES:
             else:
                 surrogate_grad = approximate_derivative(X)
                 # U = orth(surrogate_grad.T)
-                try:
-                    self.U, _ = torch.linalg.qr(surrogate_grad.T)
-                except:
-                    return float('nan')
+                # try:
+                self.U, _ = torch.linalg.qr(surrogate_grad)
+                # except:
+                #     return float('nan')
             # Update k dim U
-            
+            f_plus_arr = []
+            f_minus_arr = []
+            noise_arr = []
             for i in range(self.P):
                 noise_n = torch.rand(self.n)
                 noise_k = torch.rand(self.k)
 
                 a = self.std * math.sqrt(self.alpha/self.n) * noise_n
                 b = self.std * math.sqrt((1 - self.alpha)/self.k) * self.U @ noise_k
-                noise =  a + b
-                self.noise_arr.append(noise)
-                self.f_plus_arr.append(self.f(X + noise.to('cuda'), targets))
-                self.f_minus_arr.append(self.f(X - noise.to('cuda'), targets))
+                noise =  (a + b).to('cuda')
+                noise_arr.append(noise)
+                f_plus_arr.append(self.f(X + noise, targets))
+                f_minus_arr.append(self.f(X - noise, targets))
             
-            self.f_plus_arr = torch.vstack(self.f_plus_arr).to('cuda')
-            self.f_minus_arr = torch.vstack(self.f_minus_arr).to('cuda')
-            self.noise_arr = torch.vstack(self.noise_arr).to('cuda')
+            self.f_plus_arr = torch.vstack(f_plus_arr).to('cuda')
+            self.f_minus_arr = torch.vstack(f_minus_arr).to('cuda')
+            self.noise_arr = torch.vstack(noise_arr).to('cuda')
 
             g = self.beta / (2*(self.std**2)*self.P) * torch.sum(self.noise_arr * (self.f_plus_arr - self.f_minus_arr), dim=0)
             
