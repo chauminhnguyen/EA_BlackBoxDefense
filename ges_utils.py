@@ -112,7 +112,7 @@ class GES:
         # Get surrogate gradient
         with torch.no_grad():
             if self.U is None:
-                self.U = torch.rand(self.n, self.k)
+                self.U = torch.rand(self.n, self.k).to('cuda')
             else:
                 surrogate_grad = approximate_derivative(X)
                 # U = orth(surrogate_grad.T)
@@ -125,12 +125,12 @@ class GES:
             f_minus_arr = []
             noise_arr = []
             for i in range(self.P):
-                noise_n = torch.rand(self.n)
-                noise_k = torch.rand(self.k)
+                noise_n = torch.rand(self.n).to('cuda')
+                noise_k = torch.rand(self.k).to('cuda')
 
                 a = self.std * math.sqrt(self.alpha/self.n) * noise_n
                 b = self.std * math.sqrt((1 - self.alpha)/self.k) * self.U @ noise_k
-                noise =  (a + b).to('cuda')
+                noise =  a + b
                 noise_arr.append(noise)
                 f_plus_arr.append(self.f(X + noise, targets))
                 f_minus_arr.append(self.f(X - noise, targets))
