@@ -17,6 +17,7 @@ from robustness import datasets as dataset_r
 from robustness.tools.imagenet_helpers import common_superclass_wnid, ImageNetHierarchy
 from torchvision.utils import save_image
 from recon_attacks import Attacker, recon_PGD_L2
+from torch.utils.data import Subset, DataLoader
 
 from ges_utils import Surrogate, GES
 
@@ -54,7 +55,7 @@ parser.add_argument('--mu', default=0.005, type=float, metavar='N',
 # Model type
 parser.add_argument('--model_type', default='AE_DS', type=str,
                     help="Denoiser + (AutoEncoder) + classifier/reconstructor",
-                    choices=['DS', 'AE_DS'])
+                    choices=['DS', 'only_denoiser'])
 parser.add_argument('--arch', type=str, choices=DENOISERS_ARCHITECTURES)
 parser.add_argument('--encoder_arch', type=str, default='cifar_encoder', choices=AUTOENCODER_ARCHITECTURES)
 parser.add_argument('--decoder_arch', type=str, default='cifar_decoder', choices=AUTOENCODER_ARCHITECTURES)
@@ -129,9 +130,14 @@ def main():
         train_dataset = get_dataset(args.dataset, 'train')
         test_dataset = get_dataset(args.dataset, 'test')
 
-        train_loader = DataLoader(train_dataset, shuffle=True, batch_size=args.batch,
+        train_subset_indices = list(range(500))
+        train_subset = Subset(train_dataset, train_subset_indices)
+        test_subset_indices = list(range(50))
+        test_subset = Subset(test_dataset, test_subset_indices)
+
+        train_loader = DataLoader(train_subset, shuffle=True, batch_size=args.batch,
                                   num_workers=args.workers, pin_memory=pin_memory)
-        test_loader = DataLoader(test_dataset, shuffle=False, batch_size=args.batch,
+        test_loader = DataLoader(test_subset, shuffle=False, batch_size=args.batch,
                                  num_workers=args.workers, pin_memory=pin_memory)
 
     elif args.dataset == 'restricted_imagenet':
@@ -144,7 +150,7 @@ def main():
 
         class_ranges, label_map = in_hier.get_subclasses(superclass_wnid, balanced=True)
         custom_dataset = dataset_r.CustomImageNet(in_path, class_ranges)
-        train_loader, test_loader = custom_dataset.make_loaders(workers=4, batch_size=args.batch)
+        train_loader, test_loader = custom_dataset.make_loaders(workers=4, batch_size=args.batch, subset=1000, subset_start=0)
 
     # --------------------- Model Loading -------------------------
     # a) Denoiser
@@ -241,6 +247,13 @@ def main():
                 test_loss, test_acc = test_with_classifier(test_loader, denoiser, criterion,
                                                            args.noise_sd,
                                                            args.print_freq, clf)
+            elif args.model_type == 'only_denoiser':
+                train_loss = train_only_denoiser(train_loader, denoiser, criterion, optimizer, epoch, args.noise_sd)
+                _, train_acc = test_with_classifier(train_loader, denoiser, criterion, args.noise_sd,
+                                                    args.print_freq, clf)
+                test_loss, test_acc = test_with_classifier(test_loader, denoiser, criterion,
+                                                           args.noise_sd,
+                                                           args.print_freq, clf)
             after = time.time()
 
             log(logfilename, "{}\t{:.3}\t{:.3}\t{:.3}\t{:.3}\t{:.3}\t{:.3}".format(
@@ -262,7 +275,7 @@ def main():
             #             args.lr, stab_train_loss, test_no_loss, test_no_loss_smooth, test_loss, test_loss_smooth,
             #             recon_loss, recon_loss_smooth, adv_loss, smooth_loss))
 
-            if args.model_type == 'DS':
+            if args.model_type == 'DS' or args.model_type == 'only_denoiser':
                 stab_train_loss = recon_train(train_loader, denoiser, criterion, optimizer, epoch,
                                                  args.noise_sd, clf)
                 test_no_loss, test_no_loss_smooth, test_loss, test_loss_smooth, recon_loss, recon_loss_smooth, adv_loss, smooth_loss = test_with_recon(
@@ -287,20 +300,20 @@ def main():
             'optimizer': optimizer.state_dict(),
         }, os.path.join(args.outdir, 'denoiser.pth.tar'))
 
-        if args.model_type == 'AE_DS':
-            torch.save({
-                'epoch': epoch + 1,
-                'arch': args.encoder_arch,
-                'state_dict': encoder.state_dict(),
-                'optimizer': optimizer.state_dict(),
-            }, os.path.join(args.outdir, 'encoder.pth.tar'))
+        # if args.model_type == 'AE_DS':
+        #     torch.save({
+        #         'epoch': epoch + 1,
+        #         'arch': args.encoder_arch,
+        #         'state_dict': encoder.state_dict(),
+        #         'optimizer': optimizer.state_dict(),
+        #     }, os.path.join(args.outdir, 'encoder.pth.tar'))
 
-            torch.save({
-                'epoch': epoch + 1,
-                'arch': args.decoder_arch,
-                'state_dict': decoder.state_dict(),
-                'optimizer': optimizer.state_dict(),
-            }, os.path.join(args.outdir, 'decoder.pth.tar'))
+        #     torch.save({
+        #         'epoch': epoch + 1,
+        #         'arch': args.decoder_arch,
+        #         'state_dict': decoder.state_dict(),
+        #         'optimizer': optimizer.state_dict(),
+        #     }, os.path.join(args.outdir, 'decoder.pth.tar'))
 
         # ----------------- Save the best model according to acc -----------------
         if test_acc > best_acc:
@@ -315,20 +328,60 @@ def main():
             'optimizer': optimizer.state_dict(),
         }, os.path.join(args.outdir, 'best_denoiser.pth.tar'))
 
-        if args.model_type == 'AE_DS':
-            torch.save({
-                'epoch': epoch + 1,
-                'arch': args.encoder_arch,
-                'state_dict': encoder.state_dict(),
-                'optimizer': optimizer.state_dict(),
-            }, os.path.join(args.outdir, 'best_encoder.pth.tar'))
+        # if args.model_type == 'AE_DS':
+        #     torch.save({
+        #         'epoch': epoch + 1,
+        #         'arch': args.encoder_arch,
+        #         'state_dict': encoder.state_dict(),
+        #         'optimizer': optimizer.state_dict(),
+        #     }, os.path.join(args.outdir, 'best_encoder.pth.tar'))
 
-            torch.save({
-                'epoch': epoch + 1,
-                'arch': args.decoder_arch,
-                'state_dict': decoder.state_dict(),
-                'optimizer': optimizer.state_dict(),
-            }, os.path.join(args.outdir, 'best_decoder.pth.tar'))
+        #     torch.save({
+        #         'epoch': epoch + 1,
+        #         'arch': args.decoder_arch,
+        #         'state_dict': decoder.state_dict(),
+        #         'optimizer': optimizer.state_dict(),
+        #     }, os.path.join(args.outdir, 'best_decoder.pth.tar'))
+
+
+def train_only_denoiser(loader: DataLoader, denoiser: torch.nn.Module, criterion, optimizer: Optimizer, epoch: int, noise_sd: float):
+    batch_time = AverageMeter()
+    data_time = AverageMeter()
+    losses = AverageMeter()
+    end = time.time()
+
+    # switch to train mode
+    denoiser.train()
+    for i, (inputs, targets) in enumerate(loader):
+        # measure data loading time
+        data_time.update(time.time() - end)
+
+        inputs = inputs.cuda()
+        targets = targets.cuda()
+
+        noise = torch.randn_like(inputs, device='cuda') * noise_sd
+        recon = denoiser(inputs + noise)
+        loss = criterion(recon, inputs)
+        losses.update(loss.item(), inputs.size(0))
+
+        # compute gradient and do SGD step
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+
+        # measure elapsed time
+        batch_time.update(time.time() - end)
+        end = time.time()
+
+        if i % args.print_freq == 0:
+            print('Epoch: [{0}][{1}/{2}]\t'
+                  'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
+                  'Data {data_time.val:.3f} ({data_time.avg:.3f})\t'
+                  'Loss {loss.val:.4f} ({loss.avg:.4f})'.format(
+                epoch, i, len(loader), batch_time=batch_time,
+                data_time=data_time, loss=losses))
+
+    return losses.avg
 
 
 def train(loader: DataLoader, denoiser: torch.nn.Module, criterion, optimizer: Optimizer, epoch: int, noise_sd: float,
