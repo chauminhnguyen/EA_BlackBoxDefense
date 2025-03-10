@@ -16,8 +16,8 @@ import os
 import time
 import torch
 import itertools
-from robustness import datasets as dataset_r
-from robustness.tools.imagenet_helpers import common_superclass_wnid, ImageNetHierarchy
+# from robustness import datasets as dataset_r
+# from robustness.tools.imagenet_helpers import common_superclass_wnid, ImageNetHierarchy
 from torchvision.utils import save_image
 from recon_attacks import Attacker, recon_PGD_L2
 from torch.utils.data import Subset, DataLoader
@@ -164,7 +164,7 @@ def main():
             data_root = '/home/chaunm/Projects/medical-adversarial-defense/defense/pur/Mode3/Alzheimer2/'
         elif 'chestcancer' in args.dataset.lower():
             # data_root = '/home/chaunm/Projects/medical-adversarial-defense/defense/datasets/ChestCancer/'
-            data_root = '/home/chaunm/Projects/medical-adversarial-defense/defense/pur/Mode3/ChestCancer2/'
+            data_root = '/content/ChestCancer/'
         elif 'kidneycancer' in args.dataset.lower():
             data_root = '/home/chaunm/Projects/medical-adversarial-defense/defense/pur/Mode3/KidneyCancer2/'
         IMG_SIZE = 64
