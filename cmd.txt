@@ -1,0 +1,125 @@
+python3 AE_DS_train.py --model_type only_denoiser --lr 1e-3 --outdir ZO_AE_DS_lr-3_q192_Coord --dataset cifar10 \
+                        --arch cifar_dncnn --epochs 200 --train_method part --optimization_method ZO --zo_method GES \
+                        --classifier ./trained_models/CIFAR-10/Classifiers/resnet110.pth.tar \
+                        --noise_sd 0.1  --q 120 --batch 256 --print-freq 100
+
+
+python3 AE_DS_train.py --model_type DS --lr 1e-3 --outdir ZO_AE_DS_lr-3_q192_Coord --dataset cifar10 \
+                        --arch cifar_dncnn --epochs 200 --train_method part --optimization_method ZO --zo_method GES \
+                        --pretrained-denoiser ./only_denoiser/denoiser.pth.tar \
+                        --classifier ./trained_models/CIFAR-10/Classifiers/resnet110.pth.tar \
+                        --noise_sd 0.1  --q 120 --batch 1
+
+python3 AE_DS_train.py --model_type DS --lr 1e-6 --outdir ZO_AE_DS_lr-3_q192_Coord2 --dataset cifar10 \
+                        --arch cifar_dncnn --epochs 200 --train_method part --optimization_method ZO --zo_method GES \
+                        --pretrained-denoiser ./only_denoiser/denoiser.pth.tar \
+                        --classifier ./trained_models/CIFAR-10/Classifiers/resnet110.pth.tar \
+                        --noise_sd 0.1  --q 120 --batch 64
+
+python3 AE_DS_train.py --model_type DS --lr 1e-6 --outdir ZO_AE_DS_lr-3_q192_Coord4 --dataset cifar10 \
+                        --arch cifar_dncnn --epochs 200 --train_method part --optimization_method ZO --zo_method GES \
+                        --pretrained-denoiser ./ZO_AE_DS_lr-3_q192_Coord3/best_denoiser.pth.tar \
+                        --classifier ./trained_models/CIFAR-10/Classifiers/resnet110.pth.tar \
+                        --noise_sd 0.1  --q 192 --batch 64
+
+=================Medical Dataset=================
+python3 AE_DS_train.py --model_type only_denoiser --lr 1e-3 --outdir DS_Medical_onlydenoiser/Alzheimer --dataset medical-alzheimer \
+                        --arch cifar_dncnn --epochs 200 --train_method part --optimization_method ZO --zo_method GES \
+                        --classifier /home/chaunm/Projects/medical-cls/saved_models/classification2/Alzheimer/model_76.pth \
+                        --noise_sd 0.1  --q 120 --batch 256 --print-freq 100
+                        
+python3 AE_DS_train.py --model_type DS --lr 1e-6 --outdir DS_Medical/Alzheimer --dataset medical-alzheimer \
+                        --arch cifar_dncnn --epochs 200 --train_method part --optimization_method ZO --zo_method GES \
+                        --classifier /home/chaunm/Projects/medical-cls/saved_models/classification2/Alzheimer/model_76.pth \
+                        --noise_sd 0.1  --q 192 --batch 64
+
+
+Pretrain AE
+python3 AE_DS_train.py --model_type AE_DS --optimizer Adam --lr 1e-3 --outdir DS_Medical_no_GES/Alzheimer --dataset medical-alzheimer \
+                        --encoder_arch TinyImageNet_encoder --decoder_arch TinyImageNet_decoder --epochs 200 \
+                        --train_objective reconstruction --train_method AE_only --optimization_method FO \
+                        --noise_sd 0.25  --q 192 --batch 64
+
+python3 AE_DS_train.py --model_type AE_DS --lr 1e-6 --outdir DS_Medical_no_GES/Alzheimer --dataset medical-alzheimer \
+                        --arch cifar_dncnn --encoder_arch TinyImageNet_encoder --decoder_arch TinyImageNet_decoder --epochs 200 \
+                        --train_method whole --optimization_method ZO --zo_method CGE \
+                        --pretrained-encoder DS_Medical_no_GES/Alzheimer/encoder.pth.tar \
+                        --pretrained-decoder DS_Medical_no_GES/Alzheimer/decoder.pth.tar \
+                        --classifier /home/chaunm/Projects/medical-cls/saved_models/classification2/Alzheimer/model_76.pth \
+                        --noise_sd 0.25  --q 192 --batch 64
+
+Test
+python3 AE_DS_certify.py --dataset medical-alzheimer --arch cifar_dncnn \
+                        --base_classifier /home/chaunm/Projects/medical-cls/saved_models/classification2/Alzheimer/model_76.pth \
+                        --pretrained-denoiser DS_Medical_no_GES/Alzheimer/best_denoiser.pth.tar  \
+                        --outfile ZO_AE_DS_lr-3_q192_Coord/sigma_0.1 \
+                        --sigma 0.25 --batch 64 --N 10000 --skip 1 --l2radius 0.1
+-------------------------------------------------
+python3 AE_DS_train.py --model_type only_denoiser --lr 1e-3 --outdir DS_Medical_onlydenoiser/ChestCancer --dataset medical-chestcancer \
+                        --arch cifar_dncnn --epochs 200 --train_method part --optimization_method ZO --zo_method GES \
+                        --classifier '/home/chaunm/Projects/medical-cls/saved_models/classification2/Chest Cancer/model_89.pth' \
+                        --noise_sd 0.25  --q 500 --batch 64 --print-freq 100
+
+python3 AE_DS_train.py --model_type DS --lr 1e-6 --outdir DS_Medical/ChestCancer --dataset medical-chestcancer \
+                        --arch cifar_dncnn --epochs 200 --train_method part --optimization_method ZO --zo_method GES \
+                        --classifier '/home/chaunm/Projects/medical-cls/saved_models/classification2/Chest Cancer/model_89.pth' \
+                        --noise_sd 0.1  --q 3000 --batch 32
+
+Pretrain AE
+python3 AE_DS_train.py --model_type AE_DS --optimizer Adam --lr 1e-3 --outdir DS_Medical_no_GES/ChestCancer --dataset medical-chestcancer \
+                        --encoder_arch TinyImageNet_encoder --decoder_arch TinyImageNet_decoder --epochs 200 \
+                        --train_objective reconstruction --train_method AE_only --optimization_method FO \
+                        --noise_sd 0.25  --q 192 --batch 64
+
+python3 AE_DS_train.py --model_type AE_DS --lr 1e-6 --outdir DS_Medical_no_GES/ChestCancer --dataset medical-chestcancer \
+                        --arch cifar_dncnn --encoder_arch TinyImageNet_encoder --decoder_arch TinyImageNet_decoder --epochs 200 \
+                        --train_method whole --optimization_method ZO --zo_method CGE \
+                        --pretrained-encoder DS_Medical_no_GES/ChestCancer/encoder.pth.tar \
+                        --pretrained-decoder DS_Medical_no_GES/ChestCancer/decoder.pth.tar \
+                        --classifier '/home/chaunm/Projects/medical-cls/saved_models/classification2/Chest Cancer/model_89.pth' \
+                        --noise_sd 0.25  --q 192 --batch 64
+
+Test
+python3 AE_DS_certify.py --dataset medical-chestcancer --arch cifar_dncnn --attack_type FGSM \
+                        --base_classifier '/home/chaunm/Projects/medical-cls/saved_models/classification2/Chest Cancer/model_89.pth' \
+                        --pretrained-denoiser DS_Medical_no_GES/ChestCancer/best_denoiser.pth.tar  \
+                        --outfile ZO_AE_DS_lr-3_q192_Coord/sigma_0.1 \
+                        --sigma 0.25 --batch 64 --N 10000 --skip 1 --l2radius 0.1
+-------------------------------------------------
+python3 AE_DS_train.py --model_type only_denoiser --lr 1e-3 --outdir DS_Medical_onlydenoiser/KidneyCancer --dataset medical-kidneycancer \
+                        --arch cifar_dncnn --epochs 200 --train_method part --optimization_method ZO --zo_method GES \
+                        --classifier '/home/chaunm/Projects/medical-cls/saved_models/classification2/Kidney Cancer/model_96.pth' \
+                        --noise_sd 0.1  --q 120 --batch 64 --print-freq 100
+
+python3 AE_DS_train.py --model_type DS --lr 1e-6 --outdir DS_Medical/KidneyCancer --dataset medical-kidneycancer \
+                        --arch cifar_dncnn --epochs 200 --train_method part --optimization_method ZO --zo_method GES \
+                        --classifier '/home/chaunm/Projects/medical-cls/saved_models/classification2/Kidney Cancer/model_96.pth' \
+                        --noise_sd 0.1  --q 192 --batch 64
+
+Pretrain AE
+python3 AE_DS_train.py --model_type AE_DS --optimizer Adam --lr 1e-3 --outdir DS_Medical_no_GES/KidneyCancer --dataset medical-kidneycancer \
+                        --encoder_arch TinyImageNet_encoder --decoder_arch TinyImageNet_decoder --epochs 200 \
+                        --train_objective reconstruction --train_method AE_only --optimization_method FO \
+                        --noise_sd 0.25  --q 192 --batch 64
+
+python3 AE_DS_train.py --model_type AE_DS --lr 1e-6 --outdir DS_Medical_no_GES/KidneyCancer --dataset medical-kidneycancer \
+                        --arch cifar_dncnn --encoder_arch TinyImageNet_encoder --decoder_arch TinyImageNet_decoder --epochs 200 \
+                        --train_method whole --optimization_method ZO --zo_method CGE \
+                        --pretrained-encoder DS_Medical_no_GES/KidneyCancer/encoder.pth.tar \
+                        --pretrained-decoder DS_Medical_no_GES/KidneyCancer/decoder.pth.tar \
+                        --classifier '/home/chaunm/Projects/medical-cls/saved_models/classification2/Kidney Cancer/model_96.pth' \
+                        --noise_sd 0.25  --q 192 --batch 64
+
+Test
+python3 AE_DS_certify.py --dataset medical-kidneycancer --arch cifar_dncnn \
+                        --base_classifier '/home/chaunm/Projects/medical-cls/saved_models/classification2/Kidney Cancer/model_96.pth' \
+                        --pretrained-denoiser DS_Medical_no_GES/KidneyCancer/best_denoiser.pth.tar  \
+                        --outfile ZO_AE_DS_lr-3_q192_Coord/sigma_0.25 \
+                        --sigma 0.25 --batch 64 --N 10000 --skip 1 --l2radius 0.25
+===================================================
+
+python3 AE_DS_certify.py --dataset medical-alzheimer --arch cifar_dncnn --attack_type FGSM \
+                        --base_classifier /home/chaunm/Projects/medical-cls/saved_models/classification2/Alzheimer/model_76.pth \
+                        --pretrained-denoiser DS_Medical_no_GES/Alzheimer/best_denoiser.pth.tar  \
+                        --outfile ZO_AE_DS_lr-3_q192_Coord/sigma_0.1 \
+                        --sigma 0.25 --batch 64 --N 10000 --skip 1 --l2radius 0.1

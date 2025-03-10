@@ -1,0 +1,5 @@
+Alzheimer 
+Chest Cancer 
+Kidney Cancer 1420 / 1984 = 71.57%
+
+518     0:00:00.000735  150     150
